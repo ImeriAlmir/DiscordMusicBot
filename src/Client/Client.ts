@@ -17,7 +17,7 @@ export class DiscordBot {
 
         this.client = new Client({
             intents: [
-                GatewayIntentBits.Guilds,
+                GatewayIntentBits.GuildVoiceStates,
             ]
         });
 
