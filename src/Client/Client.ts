@@ -1,7 +1,7 @@
 require("dotenv").config();
-import { Client, GatewayIntentBits, Events, Guild, Interaction } from "discord.js";
+import { Client, GatewayIntentBits, Events, Guild, CommandInteraction, Interaction } from "discord.js";
 import LoggingService from "../services/Logging/LoggingService";
-import PlayMusicCommand from "../Commands/PlayMusicCommand/PlayMusicCommand";
+import MusicService from "../services/Music/MusicService";
 
 export class DiscordBot {
     private static instance: DiscordBot;
@@ -10,7 +10,7 @@ export class DiscordBot {
     private GUILD_ID: string = process.env.GUILD_ID || "";
     private guild: Guild | undefined;
     private LOGGER: LoggingService;
-    private playMusicCommand;
+    private musicService: MusicService;
 
     public constructor() {
         this.LOGGER = new LoggingService();
@@ -21,24 +21,17 @@ export class DiscordBot {
             ]
         });
 
-        this.playMusicCommand = new PlayMusicCommand();
+        this.guild = this.client.guilds.cache.get(this.GUILD_ID);
+        this.musicService = new MusicService(this.guild);
 
-        this.client.once(Events.ClientReady, () => {
-            this.registerCommands();
+        this.client.once(Events.ClientReady, async () => {
+            this.guild = await this.client.guilds.fetch(this.GUILD_ID);
+            this.musicService.setGuild(this.guild);
             this.LOGGER.info("BOT IS UP AND READY");
         });
 
         this.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
-            if (!interaction.isCommand()) {
-                this.LOGGER.info("not a command");
-                return;
-            }
-
-            const { commandName } = interaction;
-
-            if (commandName === this.playMusicCommand.name) {
-                this.playMusicCommand.execute(interaction);
-            }
+            this.musicService.handleInteraction(interaction as CommandInteraction);
         });
     }
 
@@ -50,21 +43,9 @@ export class DiscordBot {
         return DiscordBot.instance;
     }
 
-    public start(): void {
+    public async start() {
+        await this.musicService.registerCommands();
         this.client.login(this.BOT_TOKEN);
     }
 
-    private async registerCommands() {
-        this.guild = this.client.guilds.cache.get(this.GUILD_ID);
-        if (!this.guild) {
-            this.LOGGER.error(`cannot find guild with id: ${this.guild}`);
-        }
-
-        try {
-            await this.guild?.commands.create(this.playMusicCommand.data);
-            this.LOGGER.info(`registred command ${this.playMusicCommand.name}`);
-        } catch (error) {
-            this.LOGGER.error(`error happend while registring command ${this.playMusicCommand.data}, with error: ${error}`);
-        }
-    }
 }

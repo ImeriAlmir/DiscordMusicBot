@@ -3,27 +3,24 @@ import { SlashCommandBuilder, CommandInteraction } from "discord.js";
 import LoggingService from "../../services/Logging/LoggingService";
 import { createAudioPlayer, createAudioResource, getVoiceConnection, joinVoiceChannel } from "@discordjs/voice";
 import ytdl from "ytdl-core";
-class PlayMusicCommand {
+import BaseCommand from "../BaseCommand/BaseCommand";
+class PlayMusicCommand extends BaseCommand {
 
     private LOGGER: LoggingService;
-    public name: string = "playmusic";
-    public description: string = "play music";
     private GUILD_ID: string = process.env.GUILD_ID || "";
     private CHANNEL_ID: string;
 
     constructor() {
+        super("playmusic", "plays music UPDATED");
+        this.data
+            .addStringOption((option) =>
+                option
+                    .setName('youtubeurl123')
+                    .setDescription('YouTube URL of the music 123123123123123')
+                    .setRequired(true)
+            );
         this.LOGGER = new LoggingService();
     }
-
-    public data = new SlashCommandBuilder()
-        .setName(this.name)
-        .setDescription(this.description)
-        .addStringOption((option) =>
-            option
-                .setName('youtubeurl')
-                .setDescription('YouTube URL of the music')
-                .setRequired(true)
-        );
 
     async execute(interaction: CommandInteraction) {
 
